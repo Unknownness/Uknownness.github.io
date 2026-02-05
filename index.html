@@ -1,0 +1,1117 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Portfolio</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500&family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            --bg-color: #0f172a;
+            --bg-alt-color: #1e293b;
+            --text-color: #e2e8f0;
+            --text-muted: #94a3b8;
+            --accent-primary: #38bdf8;
+            --accent-secondary: #818cf8;
+            --border-color: #334155;
+            --code-bg: #0d1117;
+            --card-hover-shadow: 0 10px 30px -10px rgba(56, 189, 248, 0.3);
+            --container-width: 1100px;
+            --section-spacing: 5rem;
+            --border-radius: 12px;
+            --transition: all 0.3s ease;
+        }
+
+        [data-theme="light"] {
+            --bg-color: #f8fafc;
+            --bg-alt-color: #ffffff;
+            --text-color: #334155;
+            --text-muted: #64748b;
+            --accent-primary: #0284c7;
+            --accent-secondary: #6366f1;
+            --border-color: #e2e8f0;
+            --code-bg: #f1f5f9;
+            --card-hover-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.1);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            line-height: 1.6;
+            transition: background-color 0.3s, color 0.3s;
+            overflow-x: hidden;
+        }
+
+        #canvas-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100vh;
+            z-index: -1;
+            opacity: 0;
+            transition: opacity 0.5s ease;
+        }
+
+        #canvas-container.visible {
+            opacity: 1;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        ::-webkit-scrollbar {
+            width: 12px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: var(--bg-color);
+            border-left: 1px solid var(--border-color);
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: linear-gradient(180deg, var(--accent-primary), var(--accent-secondary));
+            border-radius: 10px;
+            border: 2px solid var(--bg-color);
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: linear-gradient(180deg, var(--accent-secondary), var(--accent-primary));
+            box-shadow: 0 0 10px rgba(56, 189, 248, 0.5);
+        }
+
+        * {
+            scrollbar-width: thin;
+            scrollbar-color: var(--accent-primary) var(--bg-color);
+        }
+
+        a {
+            text-decoration: none;
+            color: inherit;
+            transition: var(--transition);
+        }
+
+        ul {
+            list-style: none;
+        }
+
+        .container {
+            max-width: var(--container-width);
+            margin: 0 auto;
+            padding: 0 1.5rem;
+            position: relative;
+        }
+
+        .section-title {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 3rem;
+            text-align: center;
+            background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+            position: relative;
+            display: block;           
+            width: fit-content;       
+            margin-left: auto;      
+            margin-right: auto;  
+        }
+
+        .section-title::after {
+            content: '';
+            position: absolute;
+            bottom: -10px;
+            left: 0;
+            width: 100%;
+            height: 4px;
+            background: linear-gradient(90deg, var(--accent-primary), var(--accent-secondary));
+            clip-path: polygon(0 0, 100% 0, 90% 100%, 10% 100%);
+        }
+
+        section {
+            padding: var(--section-spacing) 0;
+        }
+
+        header {
+            position: fixed;
+            top: 0;
+            width: 100%;
+            background-color: rgba(15, 23, 42, 0.85);
+            -webkit-backdrop-filter: blur(12px);
+            backdrop-filter: blur(12px);
+            z-index: 1000;
+            border-bottom: 1px solid var(--border-color);
+            padding: 1rem 0;
+            transition: background-color 0.3s;
+        }
+
+        [data-theme="light"] header {
+            background-color: rgba(255, 255, 255, 0.85);
+        }
+
+        nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--accent-primary);
+            font-family: 'Fira Code', monospace;
+            text-shadow: 0 0 10px rgba(56, 189, 248, 0.5),
+                         0 0 20px rgba(56, 189, 248, 0.3),
+                         0 0 30px rgba(56, 189, 248, 0.2);
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 2rem;
+        }
+
+        .nav-links a:hover {
+            color: var(--accent-primary);
+            text-shadow: 0 0 10px rgba(56, 189, 248, 0.6),
+                         0 0 20px rgba(56, 189, 248, 0.4),
+                         0 0 30px rgba(56, 189, 248, 0.2);
+        }
+
+        .theme-toggle {
+            background: none;
+            border: 1px solid var(--border-color);
+            color: var(--text-color);
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            transition: var(--transition);
+        }
+
+        .theme-toggle:hover {
+            border-color: var(--accent-primary);
+            color: var(--accent-primary);
+        }
+
+        .hero {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding-top: 80px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .hero-content {
+            flex: 1;
+            max-width: 600px;
+            z-index: 1;
+        }
+
+        .hero-greeting {
+            color: var(--accent-primary);
+            font-family: 'Fira Code', monospace;
+            margin-bottom: 1rem;
+            display: block;
+            text-shadow: 0 0 10px rgba(56, 189, 248, 0.5),
+                         0 0 20px rgba(56, 189, 248, 0.3),
+                         0 0 30px rgba(56, 189, 248, 0.2);
+        }
+
+        .hero h1 {
+            font-size: 3.5rem;
+            line-height: 1.1;
+            margin-bottom: 1rem;
+        }
+
+        .hero h1 span {
+            color: var(--text-muted);
+        }
+
+        .hero p {
+            font-size: 1.1rem;
+            color: var(--text-muted);
+            margin-bottom: 2rem;
+            max-width: 500px;
+        }
+
+        .hero-btn {
+            display: inline-block;
+            padding: 0.8rem 2rem;
+            background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+            color: white;
+            font-weight: 600;
+            border-radius: 4px;
+            clip-path: polygon(10% 0, 100% 0, 100% 70%, 90% 100%, 0 100%, 0 30%);
+            transition: var(--transition);
+        }
+
+        .hero-btn:hover {
+            transform: translateY(-2px);
+            filter: brightness(1.1);
+        }
+
+        .hero-visual {
+            flex: 1;
+            display: flex;
+            justify-content: center;
+            position: relative;
+            z-index: 1;
+        }
+
+        .code-animation {
+            background: var(--code-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 2rem;
+            width: 100%;
+            max-width: 450px;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.3);
+            position: relative;
+            -webkit-backdrop-filter: blur(10px);
+            backdrop-filter: blur(10px);
+        }
+
+        .code-animation::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 30px;
+            background: var(--bg-alt-color);
+            border-bottom: 1px solid var(--border-color);
+            border-radius: 12px 12px 0 0;
+        }
+
+        .code-animation::after {
+            content: '';
+            position: absolute;
+            top: 10px;
+            left: 15px;
+            width: 10px;
+            height: 10px;
+            background: #ff5f57;
+            border-radius: 50%;
+            box-shadow: 16px 0 0 #ffbd2e, 32px 0 0 #28c940;
+        }
+
+        .code-animation pre {
+            margin-top: 1.5rem;
+            font-family: 'Fira Code', 'Courier New', monospace;
+            font-size: 0.9rem;
+            color: var(--text-color);
+            white-space: pre-wrap;
+            min-height: 200px;
+        }
+
+        .keyword { color: var(--accent-secondary); }
+        .string { color: #4ade80; }
+        .type { color: var(--accent-primary); }
+        .comment { color: var(--text-muted); font-style: italic; }
+
+        .skills-section {
+            background: linear-gradient(135deg, rgba(56, 189, 248, 0.05), rgba(129, 140, 248, 0.05));
+            clip-path: polygon(0 5%, 100% 0, 100% 95%, 0 100%);
+            padding: 6rem 0;
+            margin-top: -2rem;
+            position: relative;
+            z-index: 2;
+            background-color: var(--bg-color);
+        }
+
+        [data-theme="light"] .skills-section {
+            background-color: var(--bg-color);
+        }
+
+        .skills-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 2rem;
+            margin-top: 2rem;
+        }
+
+        .skill-category h3 {
+            font-size: 1.2rem;
+            margin-bottom: 1rem;
+            color: var(--accent-primary);
+            border-bottom: 2px solid var(--border-color);
+            padding-bottom: 0.5rem;
+            display: inline-block;
+        }
+
+        .skill-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.8rem;
+        }
+
+        .tag {
+            background-color: var(--bg-alt-color);
+            border: 1px solid var(--border-color);
+            padding: 0.4rem 0.8rem;
+            border-radius: 6px;
+            font-size: 0.9rem;
+            font-family: 'Fira Code', monospace;
+            transition: var(--transition);
+            cursor: default;
+        }
+
+        .tag:hover {
+            border-color: var(--accent-primary);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+        }
+
+        .project-featured {
+            background-color: var(--bg-alt-color);
+            border-radius: 20px;
+            overflow: hidden;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+            border: 1px solid var(--border-color);
+        }
+
+        .project-image {
+            background: linear-gradient(135deg, #1e293b, #0f172a);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .project-image i {
+            font-size: 8rem;
+            color: var(--accent-secondary);
+            opacity: 0.2;
+            animation: float 6s ease-in-out infinite;
+        }
+
+        .project-content {
+            padding: 3rem;
+        }
+
+        .project-title {
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .project-subtitle {
+            color: var(--accent-primary);
+            font-family: 'Fira Code', monospace;
+            margin-bottom: 1.5rem;
+            display: block;
+        }
+
+        .project-desc {
+            color: var(--text-muted);
+            margin-bottom: 2rem;
+        }
+
+        .responsibilities h4 {
+            margin-bottom: 1rem;
+            font-size: 1.1rem;
+        }
+
+        .responsibilities ul li {
+            position: relative;
+            padding-left: 1.5rem;
+            margin-bottom: 0.5rem;
+            color: var(--text-muted);
+        }
+
+        .responsibilities ul li::before {
+            content: '▹';
+            position: absolute;
+            left: 0;
+            color: var(--accent-primary);
+        }
+
+        .github-header {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+            margin-top: 4rem;
+        }
+
+        .github-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 2rem;
+        }
+
+        .repo-card {
+            background-color: var(--bg-alt-color);
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius);
+            padding: 1.5rem;
+            transition: var(--transition);
+            position: relative;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .repo-card:hover {
+            transform: translateY(-5px);
+            border-color: var(--accent-primary);
+            box-shadow: var(--card-hover-shadow);
+        }
+
+        .repo-card:hover::before {
+            opacity: 1;
+        }
+
+        .repo-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: start;
+            margin-bottom: 1rem;
+        }
+
+        .repo-icon {
+            color: var(--text-muted);
+            font-size: 1.2rem;
+        }
+
+        .repo-name {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--accent-primary);
+        }
+
+        .repo-desc {
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            margin-bottom: 1.5rem;
+            flex-grow: 1;
+        }
+
+        .repo-stats {
+            display: flex;
+            gap: 1rem;
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            font-family: 'Fira Code', monospace;
+        }
+
+        .stat-item {
+            display: flex;
+            align-items: center;
+            gap: 0.3rem;
+        }
+
+        .repo-link {
+            margin-top: 1rem;
+            text-align: right;
+        }
+        
+        .repo-link a {
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: var(--text-color);
+        }
+        
+        .repo-link a:hover {
+            color: var(--accent-secondary);
+            text-decoration: underline;
+        }
+
+        #github-status {
+            text-align: center;
+            grid-column: 1 / -1;
+            padding: 2rem;
+            color: var(--text-muted);
+        }
+
+        .contact-section {
+            text-align: center;
+            background: linear-gradient(to top, var(--bg-alt-color), var(--bg-color));
+        }
+
+        .contact-links {
+            display: flex;
+            justify-content: center;
+            gap: 2rem;
+            flex-wrap: wrap;
+            margin-top: 2rem;
+        }
+
+        .contact-btn {
+            display: flex;
+            align-items: center;
+            gap: 0.8rem;
+            padding: 1rem 2rem;
+            background-color: var(--bg-alt-color);
+            border: 1px solid var(--border-color);
+            border-radius: 50px;
+            color: var(--text-color);
+            font-size: 1.1rem;
+            transition: var(--transition);
+        }
+
+        .contact-btn:hover {
+            background-color: var(--accent-primary);
+            border-color: var(--accent-primary);
+            color: white;
+            transform: scale(1.05);
+        }
+
+        @keyframes float {
+            0% { transform: translateY(0px); }
+            50% { transform: translateY(-20px); }
+            100% { transform: translateY(0px); }
+        }
+
+        @media (max-width: 768px) {
+            .hero {
+                flex-direction: column;
+                text-align: center;
+                padding-top: 120px;
+                gap: 3rem;
+            }
+            
+            .hero-content h1 {
+                font-size: 2.5rem;
+            }
+
+            .hero-visual {
+                width: 100%;
+            }
+            
+            .code-animation {
+                margin: 0 auto;
+                transform: none;
+            }
+
+            .project-featured {
+                grid-template-columns: 1fr;
+            }
+            
+            .nav-links {
+                display: none;
+            }
+            
+            .skills-section {
+                clip-path: none;
+            }
+        }
+    </style>
+</head>
+<body data-theme="dark">
+
+    <div id="canvas-container"></div>
+
+    <header>
+        <div class="container">
+            <nav>
+                <div class="logo">&lt;Vladimir /&gt;</div>
+                <div class="nav-links">
+                    <a href="#about">About</a>
+                    <a href="#skills">Skills</a>
+                    <a href="#commercial-projects">Commercial Projects</a>
+                    <a href="#github-projects">GitHub</a>
+                    <a href="#contact">Contacts</a>
+                </div>
+                <button title="Theme toggle" class="theme-toggle" id="theme-toggle">
+                    <i class="fas fa-moon"></i>
+                </button>
+            </nav>
+        </div>
+    </header>
+
+    <main>
+        <section id="about" class="hero container">
+            <div class="hero-content">
+                <span class="hero-greeting">Hi, my name is Vladimir</span>
+                <h1>Backend Developer<br><span>Java & Spring</span></h1>
+                <p>
+                    Motivated 3rd-year Computer Science student at BSUIR, specializing in Computing Machines, Systems, and Networks. 
+                    Strong foundation in Java, C/​C++, Spring, Qt, and SQL through academic and commercial projects and self-study. 
+                    Developed 3+ personal projects (available on GitHub), demonstrating problem-solving skills and passion for software development. 
+                    Eager to apply knowledge in a real-world environment. 
+                    Quick learner, detail-oriented, and committed to writing clean, efficient code.
+                </p>
+                <a href="#contact" class="hero-btn">Contact me</a>
+            </div>
+            
+            <div class="hero-visual">
+                <div class="code-animation">
+                    <pre id="code-snippet"></pre>
+                </div>
+            </div>
+        </section>
+
+        <section id="skills" class="skills-section">
+            <div class="container">
+                <h2 class="section-title">Skills</h2>
+                <div class="skills-grid">
+                    <div class="skill-category">
+                        <h3>Languages</h3>
+                        <div class="skill-tags">
+                            <span class="tag">Java</span>
+                            <span class="tag">C/C++</span>
+                            <span class="tag">SQL</span>
+                            <span class="tag">English (B1)</span>
+                        </div>
+                    </div>
+                    <div class="skill-category">
+                        <h3>Backend</h3>
+                        <div class="skill-tags">
+                            <span class="tag">Spring (Boot, AOP, Cloud, Security, Data, MVC, JPA)</span>
+                            <span class="tag">Vaadin</span>
+                            <span class="tag">Hibernate</span>
+                            <span class="tag">Liquibase</span>
+                            <span class="tag">REST</span>
+                            <span class="tag">JWT</span>
+                            <span class="tag">MapStruct</span>
+                            <span class="tag">Lombok</span>
+                            <span class="tag">TestContainers</span>
+                            <span class="tag">JUnit</span>
+                            <span class="tag">Mockito</span>
+                            <span class="tag">Maven, Gradle</span>
+                        </div>
+                    </div>
+                    <div class="skill-category">
+                        <h3>Databases</h3>
+                        <div class="skill-tags">
+                            <span class="tag">PostgreSQL</span>
+                            <span class="tag">MongoDB</span>
+                            <span class="tag">Redis</span>
+                            <span class="tag">MySQL</span>
+                        </div>
+                    </div>
+                    <div class="skill-category">
+                        <h3>DevOps & Cloud</h3>
+                        <div class="skill-tags">
+                            <span class="tag">Docker, Docker Compose</span>
+                            <span class="tag">Kubernetes</span>
+                            <span class="tag">GitHub CI/CD</span>
+                            <span class="tag">AWS (EC2, S3, RDS, DynamoDB, ECS / EKS)</span>
+                            <span class="tag">SonarQube</span>
+                            <span class="tag">Supabase, Render, Vercel</span>
+                        </div>
+                    </div>
+                    <div class="skill-category">
+                        <h3>Message Brokers</h3>
+                        <div class="skill-tags">
+                            <span class="tag">Kafka</span>
+                            <span class="tag">RabbitMQ</span>
+                        </div>
+                    </div>
+                    <div class="skill-category">
+                        <h3>Project Control Systems</h3>
+                        <div class="skill-tags">
+                            <span class="tag">Jira</span>
+                            <span class="tag">Confluence</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="commercial-projects" class="container">
+            <h2 class="section-title">Commercial Projects</h2>
+            <article class="project-featured">
+                <div class="project-image">
+                    <i class="fas fa-network-wired"></i>
+                </div>
+                <div class="project-content">
+                    <h3 class="project-title">Ablements</h3>
+                    <span class="project-subtitle">SDLC Platform</span>
+                    <p class="project-desc">
+                        Provides large B2B organizations with centralized functionality for designing, standardizing, managing, and automating internal software development lifecycle (SDLC) processes. It ensures process transparency, reduces risks, and improves quality.
+                    </p>
+                    <div class="responsibilities">
+                        <h4>Key responsibilities:</h4>
+                        <ul>
+                            <li>Development of microservice for working with SDLC entities and aggregating data from the system's microservices</li>
+                            <li>Development, optimization, and maintenance of MySQL database schemas, including tables, indexes, relations, and constraints</li>
+                            <li>Using Apache Kafka to send events in order to communicate with other microservices in asynchronous way</li>
+                            <li>Writing unit and integration tests using JUnit, Mockito, and TestContainers</li>
+                            <li>Create and maintain CI/​CD pipelines using GitLab CI/​CD to automate build, testing, and deployment processes</li>
+                        </ul>
+                    </div>
+                </div>
+            </article>
+        </section>
+
+        <section id="github-projects" class="container">
+            <div class="github-header">
+                <h2 class="section-title" style="margin-bottom: 2rem;">GitHub Repos</h2>
+                <a rel="noopener" href="https://github.com/vovabsuir?tab=repositories" target="_blank" class="hero-btn" style="padding: 0.5rem 1rem; font-size: 0.9rem; clip-path: none; border-radius: 4px;">View All</a>
+            </div>
+            
+            <div class="github-grid" id="github-container">
+                <div id="github-status">
+                    <i class="fas fa-spinner fa-spin fa-2x"></i>
+                    <p style="margin-top: 1rem;">Fetching repositories...</p>
+                </div>
+            </div>
+        </section>
+
+        <section id="contact" class="contact-section">
+            <div class="container">
+                <h2 class="section-title">Contact me</h2>
+                <p style="color: var(--text-muted); max-width: 600px; margin: 0 auto;">
+                    I'm open to job offers and collaborations.
+                    If you're looking for a reliable backend-developer, my contact information is below!
+                </p>
+                <div class="contact-links">
+                    <a href="mailto:vovabsuir@gmail.com" class="contact-btn">
+                        <i class="fas fa-envelope"></i>
+                        vovabsuir@gmail.com
+                    </a>
+                    <a rel="noopener" href="https://t.me/Val_de_Marn" target="_blank" class="contact-btn">
+                        <i class="fab fa-telegram-plane"></i>
+                        Telegram
+                    </a>
+                    <a rel="noopener" href="https://github.com/vovabsuir" target="_blank" class="contact-btn">
+                        <i class="fab fa-github"></i>
+                        GitHub
+                    </a>
+                    <a href="tel:+375298417851" class="contact-btn">
+                        <i class="fas fa-phone"></i>
+                        +375-29-841-78-51
+                    </a>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <script>
+        const canvasContainer = document.getElementById('canvas-container');
+        const scene = new THREE.Scene();
+        scene.fog = new THREE.FogExp2(0x0f172a, 0.02);
+
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
+        
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(window.devicePixelRatio);
+        canvasContainer.appendChild(renderer.domElement);
+
+        const geometry = new THREE.IcosahedronGeometry(10, 2);
+        const material = new THREE.MeshBasicMaterial({ 
+            color: 0x38bdf8, 
+            wireframe: true, 
+            transparent: true, 
+            opacity: 0.15 
+        });
+        const sphere = new THREE.Mesh(geometry, material);
+        scene.add(sphere);
+
+        const coreGeometry = new THREE.IcosahedronGeometry(4, 1);
+        const coreMaterial = new THREE.MeshBasicMaterial({
+            color: 0x38bdf8,
+            wireframe: true,
+            transparent: true,
+            opacity: 0.05
+        });
+        const core = new THREE.Mesh(coreGeometry, coreMaterial);
+        scene.add(core);
+
+        const particlesGeometry = new THREE.BufferGeometry();
+        const particlesCount = 700;
+        const posArray = new Float32Array(particlesCount * 3);
+
+        for(let i = 0; i < particlesCount * 3; i++) {
+            posArray[i] = (Math.random() - 0.5) * 40; 
+        }
+
+        particlesGeometry.setAttribute('position', new THREE.BufferAttribute(posArray, 3));
+        const particlesMaterial = new THREE.PointsMaterial({
+            size: 0.05,
+            color: 0x818cf8,
+            transparent: true,
+            opacity: 0.8,
+        });
+        const particlesMesh = new THREE.Points(particlesGeometry, particlesMaterial);
+        scene.add(particlesMesh);
+
+        camera.position.z = 15;
+
+        let mouseX = 0;
+        let mouseY = 0;
+        let targetX = 0;
+        let targetY = 0;
+
+        const windowHalfX = window.innerWidth / 2;
+        const windowHalfY = window.innerHeight / 2;
+
+        document.addEventListener('mousemove', (event) => {
+            mouseX = (event.clientX - windowHalfX);
+            mouseY = (event.clientY - windowHalfY);
+        });
+
+        const clock = new THREE.Clock();
+
+        function animate() {
+            targetX = mouseX * 0.001;
+            targetY = mouseY * 0.001;
+
+            const elapsedTime = clock.getElapsedTime();
+
+            sphere.rotation.y += 0.002;
+            sphere.rotation.x += 0.001;
+
+            core.rotation.y -= 0.004;
+            core.rotation.x -= 0.002;
+
+            particlesMesh.rotation.y = -mouseX * 0.0002;
+            particlesMesh.rotation.x = -mouseY * 0.0002;
+
+            sphere.rotation.y += 0.05 * (targetX - sphere.rotation.y);
+            sphere.rotation.x += 0.05 * (targetY - sphere.rotation.x);
+
+            renderer.render(scene, camera);
+            requestAnimationFrame(animate);
+        }
+
+        animate();
+
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+
+        function update3DTheme(theme) {
+            if (theme === 'light') {
+                scene.fog.color.set(0xf8fafc);
+                material.color.set(0x0284c7);
+                coreMaterial.color.set(0x6366f1);
+                particlesMaterial.color.set(0x6366f1);
+            } else {
+                scene.fog.color.set(0x0f172a);
+                material.color.set(0x38bdf8);
+                coreMaterial.color.set(0x38bdf8);
+                particlesMaterial.color.set(0x818cf8);
+            }
+        }
+
+        const observer = new MutationObserver((mutations) => {
+            mutations.forEach((mutation) => {
+                if (mutation.type === 'attributes' && mutation.attributeName === 'data-theme') {
+                    const newTheme = document.body.getAttribute('data-theme');
+                    update3DTheme(newTheme);
+                }
+            });
+        });
+
+        observer.observe(document.body, { attributes: true });
+
+        const skillsSection = document.getElementById('skills');
+        
+        const visibilityObserver = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    canvasContainer.classList.remove('visible');
+                } else {
+                    if (entry.boundingClientRect.top > 0) {
+                        canvasContainer.classList.add('visible');
+                    } else {
+                        canvasContainer.classList.remove('visible');
+                    }
+                }
+            });
+        }, {
+            threshold: 0.1,
+            rootMargin: '0px 0px -10% 0px'
+        });
+
+        visibilityObserver.observe(skillsSection);
+
+        window.addEventListener('load', () => {
+            const skillsRect = skillsSection.getBoundingClientRect();
+            if (skillsRect.top > window.innerHeight || skillsRect.bottom < 0) {
+                canvasContainer.classList.add('visible');
+            }
+        });
+
+        const themeToggleBtn = document.getElementById('theme-toggle');
+        const icon = themeToggleBtn.querySelector('i');
+        
+        const savedTheme = localStorage.getItem('theme');
+        if (savedTheme) {
+            document.body.setAttribute('data-theme', savedTheme);
+            updateIcon(savedTheme);
+            update3DTheme(savedTheme);
+        }
+
+        themeToggleBtn.addEventListener('click', () => {
+            const currentTheme = document.body.getAttribute('data-theme');
+            const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+            
+            document.body.setAttribute('data-theme', newTheme);
+            localStorage.setItem('theme', newTheme);
+            updateIcon(newTheme);
+        });
+
+        function updateIcon(theme) {
+            if (theme === 'light') {
+                icon.classList.remove('fa-moon');
+                icon.classList.add('fa-sun');
+            } else {
+                icon.classList.remove('fa-sun');
+                icon.classList.add('fa-moon');
+            }
+        }
+
+        const codeSnippet = document.getElementById('code-snippet');
+        const codeLines = [
+            'public class Developer {',
+            '    private String name = "Vladimir";',
+            '    private String[] skills = {',
+            '        "Java", "Spring", "Microservices"',
+            '    };',
+            '    ',
+            '    public void create() {',
+            '        // Building amazing things',
+            '    }',
+            '}'
+        ];
+
+        let lineIndex = 0;
+        let charIndex = 0;
+        let isDeletingAll = false;
+        let fullText = '';
+
+        function typeCode() {
+            if (!isDeletingAll) {
+                const targetLine = codeLines[lineIndex];
+                const currentLineText = targetLine.substring(0, charIndex + 1);
+                charIndex++;
+
+                const completedLines = codeLines.slice(0, lineIndex).join('\n');
+                fullText = lineIndex > 0 ? completedLines + '\n' + currentLineText : currentLineText;
+                codeSnippet.textContent = fullText;
+
+                if (charIndex === targetLine.length) {
+                    lineIndex++;
+                    charIndex = 0;
+                    
+                    if (lineIndex >= codeLines.length) {
+                        setTimeout(() => {
+                            isDeletingAll = true;
+                            typeCode();
+                        }, 1500);
+                        return;
+                    } else {
+                        setTimeout(typeCode, 100);
+                        return;
+                    }
+                }
+                
+                setTimeout(typeCode, 50);
+            } else {
+                fullText = fullText.slice(0, -1);
+                codeSnippet.textContent = fullText;
+
+                if (fullText.length === 0) {
+                    isDeletingAll = false;
+                    lineIndex = 0;
+                    charIndex = 0;
+                    setTimeout(typeCode, 500);
+                    return;
+                }
+
+                setTimeout(typeCode, 15);
+            }
+        }
+
+        window.addEventListener('load', () => {
+            setTimeout(typeCode, 800);
+        });
+
+        const githubContainer = document.getElementById('github-container');
+        const statusDiv = document.getElementById('github-status');
+        
+        async function fetchRepos() {
+            try {
+                const response = await fetch('https://api.github.com/users/vovabsuir/repos?sort=updated&per_page=6&type=owner');
+                if (!response.ok) throw new Error('Network error');
+                const repos = await response.json();
+                githubContainer.innerHTML = '';
+
+                if (repos.length === 0) {
+                    githubContainer.innerHTML = '<p style="text-align:center; grid-column:1/-1;">Repositories were not found.</p>';
+                    return;
+                }
+
+                repos.forEach(repo => {
+                    const card = document.createElement('article');
+                    card.className = 'repo-card';
+                    const description = repo.description ? repo.description : 'No description.';
+                    const langColor = repo.language ? getLangColor(repo.language) : '#ccc';
+                    
+                    card.innerHTML = `
+                        <div class="repo-header">
+                            <i class="fas fa-book repo-icon"></i>
+                            <a href="${repo.html_url}" target="_blank" class="repo-name">${repo.name}</a>
+                        </div>
+                        <p class="repo-desc">${description}</p>
+                        <div class="repo-stats">
+                            <span class="stat-item" style="color: ${langColor}">
+                                <i class="fas fa-circle" style="font-size: 0.6rem;"></i> ${repo.language || 'N/A'}
+                            </span>
+                            <span class="stat-item">
+                                <i class="fas fa-star"></i> ${repo.stargazers_count}
+                            </span>
+                            <span class="stat-item">
+                                <i class="fas fa-code-branch"></i> ${repo.forks_count}
+                            </span>
+                        </div>
+                        <div class="repo-link">
+                            <a href="${repo.html_url}" target="_blank">Go to repo <i class="fas fa-arrow-right"></i></a>
+                        </div>
+                    `;
+                    githubContainer.appendChild(card);
+                });
+
+            } catch (error) {
+                console.error(error);
+                statusDiv.innerHTML = `
+                    <p>Cannot fetch repositories. Check the connection or <a href="https://github.com/vovabsuir" target="_blank">visit the GitHub account directly</a>.</p>
+                `;
+            }
+        }
+
+        function getLangColor(lang) {
+            const colors = {
+                Java: '#f89820',
+                'C++': '#f34b7d',
+                Python: '#3572A5',
+                JavaScript: '#f1e05a',
+                HTML: '#e34c26',
+                CSS: '#563d7c',
+                Shell: '#89e051'
+            };
+            return colors[lang] || '#8b949e';
+        }
+
+        fetchRepos();
+    </script>
+</body>
+</html>
